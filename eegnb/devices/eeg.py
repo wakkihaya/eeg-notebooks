@@ -71,7 +71,6 @@ class EEG:
         self.initialize_backend()
         self.n_channels = len(EEG_INDICES[self.device_name])
         self.sfreq = SAMPLE_FREQS[self.device_name]
-        self.channels = EEG_CHANNELS[self.device_name]
 
     def initialize_backend(self):
         if self.backend == "brainflow":
@@ -79,7 +78,7 @@ class EEG:
             self.timestamp_channel = BoardShim.get_timestamp_channel(self.brainflow_id)
         elif self.backend == "muselsl":
             self._init_muselsl()
-            self._muse_get_recent() # run this at initialization to get some 
+            self._muse_get_recent() # run this at initialization to get some
                                     # stream metadata into the eeg class
 
     def _get_backend(self, device_name):
@@ -97,16 +96,15 @@ class EEG:
         self._muse_recent_inlet = None
 
     def _start_muse(self, duration):
-        if sys.platform in ["linux", "linux2", "darwin"]:
-            # Look for muses
-            self.muses = list_muses()
-            # self.muse = muses[0]
+        # Look for muses
+        self.muses = list_muses()
+        # self.muse = muses[0]
 
-            # Start streaming process
-            self.stream_process = Process(
-                target=stream, args=(self.muses[0]["address"],)
-            )
-            self.stream_process.start()
+        # Start streaming process
+        self.stream_process = Process(
+            target=stream, args=(self.muses[0]["address"],)
+        )
+        self.stream_process.start()
 
         # Create markers stream outlet
         self.muse_StreamInfo = StreamInfo(
@@ -120,7 +118,7 @@ class EEG:
             print("will save to file: %s" % self.save_fn)
         self.recording = Process(target=record, args=(duration, self.save_fn))
         self.recording.start()
-        
+
         time.sleep(5)
         self.stream_started = True
         self.push_sample([99], timestamp=time.time())
@@ -282,14 +280,14 @@ class EEG:
 
         # Create a column for the stimuli to append to the EEG data
         stim_array = create_stim_array(timestamps, self.markers)
-        timestamps = timestamps[ ..., None ]  
-        
+        timestamps = timestamps[ ..., None ]
+
         # Add an additional dimension so that shapes match
         total_data = np.append(timestamps, eeg_data, 1)
 
         # Append the stim array to data.
-        total_data = np.append(total_data, stim_array, 1)  
-        
+        total_data = np.append(total_data, stim_array, 1)
+
         # Subtract five seconds of settling time from beginning
         total_data = total_data[5 * self.sfreq :]
         data_df = pd.DataFrame(total_data, columns=["timestamps"] + ch_names + ["stim"])
@@ -410,4 +408,3 @@ class EEG:
         else:
             raise ValueError(f"Unknown backend {self.backend}")
         return df
-
